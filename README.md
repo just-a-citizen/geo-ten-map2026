@@ -1,0 +1,1 @@
+# recommended-spot-map
