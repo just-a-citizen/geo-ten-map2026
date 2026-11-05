@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>出身地とスポットのつながりマップ</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <style>
+      #map { height: 100vh; width: 100%; margin: 0; background: #f0f0f0; } /* 背景色をつけて白飛び対策 */
+      body { margin: 0; padding: 0; font-family: sans-serif; }
+      .popup-card { line-height: 1.4; font-size: 14px; }
+      .spot-title { font-weight: bold; color: #d32f2f; font-size: 16px; }
+    </style>
+  </head>
+  <body>
+    <div id="map"></div>
+    <script>
+      const map = L.map('map').setView([36.0, 137.0], 5);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap contributors'
+      }).addTo(map);
+
+      function getRandomColor() {
+        // 少し濃いめの色が出るように調整
+        const colors = ['#e91e63', '#9c27b0', '#673ab7', '#3f51b5', '#2196f3', '#009688', '#4caf50', '#ff5722', '#795548'];
+        return colors[Math.floor(Math.random() * colors.length)];
+      }
+
+      const GAS_URL =
+"https://script.google.com/macros/s/AKfycbw5q5Q9_LVpFDDBmWGbJKhbF8OcIr9iPvM9wlJuSkXq2DGz_zCDYKf137prtdA9_J0g/exec?action=data";
+
+fetch(GAS_URL)
+  .then(response => response.json())
+  .then(function(data) {
+
+    if (!data || data.length <= 1) return;
+
+    data.forEach(function(row, index) {
+      if (index === 0) return;
+
+      const originLat = Number(row[6]);
+      const originLng = Number(row[7]);
+      const spotLat = Number(row[8]);
+      const spotLng = Number(row[9]);
+
+      if (!isNaN(originLat) &&
+          !isNaN(originLng) &&
+          !isNaN(spotLat) &&
+          !isNaN(spotLng)) {
+
+        const color = getRandomColor();
+
+        L.circleMarker([originLat, originLng], {
+          radius: 4,
+          color: '#000',
+          fillColor: '#000',
+          fillOpacity: 1,
+          weight: 1
+        }).addTo(map);
+
+        L.polyline(
+          [[originLat, originLng], [spotLat, spotLng]],
+          {
+            color: '#000',
+            weight: 8,
+            opacity: 0.2
+          }
+        ).addTo(map);
+
+        L.polyline(
+          [[originLat, originLng], [spotLat, spotLng]],
+          {
+            color: color,
+            weight: 5,
+            opacity: 0.9
+          }
+        ).addTo(map);
+
+        L.circleMarker([spotLat, spotLng], {
+          radius: 10,
+          color: '#fff',
+          fillColor: color,
+          fillOpacity: 1,
+          weight: 3
+        }).addTo(map);
+      }
+    });
+
+  })
+  .catch(error => {
+    console.error("データ取得失敗:", error);
+  });
+    </script>
+  </body>
+</html>

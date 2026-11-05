@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>おすすめスポットマップ</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <style>
+      #map { height: 100vh; width: 100%; margin: 0; }
+      body { margin: 0; padding: 0; font-family: sans-serif; }
+      /* ポップアップの見た目を調整 */
+      .leaflet-popup-content { font-size: 14px; line-height: 1.6; }
+      .spot-name { font-size: 16px; font-weight: bold; color: #333; margin-bottom: 5px; display: block; }
+      .reason-title { font-weight: bold; color: #555; margin-top: 8px; display: block; }
+      .hometown-info { font-size: 12px; color: #777; margin-top: 10px; border-top: 1px solid #eee; padding-top: 5px; display: block; }
+    </style>
+  </head>
+  <body>
+    <div id="map"></div>
+    <script>
+      // 地図の初期表示（日本全体が見えるように設定）
+      const map = L.map('map').setView([36.0, 137.0], 5);
+
+      // 地図のデザイン（OpenStreetMap）を設定
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap contributors'
+      }).addTo(map);
+
+const GAS_URL =
+"https://script.google.com/macros/s/AKfycbw5q5Q9_LVpFDDBmWGbJKhbF8OcIr9iPvM9wlJuSkXq2DGz_zCDYKf137prtdA9_J0g/exec?action=data";
+fetch(GAS_URL)
+  .then(response => response.json())
+  .then(function(data) {
+
+    console.log("GASから届いたデータ:", data);
+
+    if (!data || data.length <= 1) {
+      alert("スプレッドシートにデータが見つかりません。");
+      return;
+    }
+
+    data.forEach(function(row, index) {
+
+      // 1行目はスキップ
+      if (index === 0) return;
+
+      const hometown = (row[1] || "") + (row[2] || "");
+      const spotName = row[3] || "名称未設定";
+      const reason = row[5] || "（理由の記載なし）";
+
+      const lat = parseFloat(row[8]);
+      const lng = parseFloat(row[9]);
+
+      if (!isNaN(lat) && !isNaN(lng)) {
+
+        const marker = L.marker([lat, lng]).addTo(map);
+
+        const popupContent =
+          "<span class='spot-name'>" + spotName + "</span>" +
+          "<span class='reason-title'>おすすめ理由：</span>" +
+          "<div>" + reason + "</div>" +
+          "<span class='hometown-info'>投稿者の出身地： " + hometown + "</span>";
+
+        marker.bindPopup(popupContent);
+      }
+    });
+
+  })
+  .catch(error => {
+    console.error("データ取得失敗:", error);
+  });
+    </script>
+  </body>
+</html>
